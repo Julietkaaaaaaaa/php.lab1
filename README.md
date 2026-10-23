@@ -12,3 +12,5 @@
 Bash
 composer install
 ./vendor/bin/phpunit tests/Unit
+
+Документацію успішно оновлено
