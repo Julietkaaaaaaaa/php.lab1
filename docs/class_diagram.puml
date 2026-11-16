@@ -1,0 +1,145 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+class User {
+  +id: int
+  +name: string
+  +email: string
+  +phone: string
+  +password: string
+  +register(): bool
+  +login(): bool
+  +updateProfile(): void
+  +resetPassword(): bool
+  +getRole(): string
+}
+
+class Client {
+  +passportNumber: string
+  +discountBonus: float
+  +bookingHistory: array
+  +address: string
+  +birthDate: string
+  +applyDiscount(code: string): float
+  +getBookingCount(): int
+  +addBonus(points: float): void
+  +updatePassport(number: string): bool
+  +getDiscountRate(): float
+}
+
+class Tour {
+  +id: int
+  +title: string
+  +destination: string
+  +price: float
+  +durationDays: int
+  +getDetails(): string
+  +checkAvailability(): bool
+  +calculateTotalPrice(persons: int): float
+  +updatePrice(newPrice: float): void
+  +archiveTour(): bool
+}
+
+class Hotel {
+  +id: int
+  +name: string
+  +stars: int
+  +address: string
+  +roomsCount: int
+  +getAvailableRooms(): int
+  +updateStars(rating: int): void
+  +getHotelInfo(): string
+  +bookRoom(roomId: int): bool
+  +cancelRoomBooking(roomId: int): bool
+}
+
+class Category {
+  +id: int
+  +name: string
+  +description: string
+  +isActive: bool
+  +code: string
+  +getToursCount(): int
+  +activateCategory(): void
+  +deactivateCategory(): void
+  +updateName(newName: string): void
+  +getCategoryDetails(): string
+}
+
+class Booking {
+  +id: int
+  +bookingDate: string
+  +totalPrice: float
+  +status: string
+  +touristCount: int
+  +createBooking(): bool
+  +cancelBooking(): bool
+  +confirmBooking(): void
+  +calculatePenalty(): float
+  +generateVoucher(): string
+}
+
+class Payment {
+  +id: int
+  +amount: float
+  +paymentDate: string
+  +paymentMethod: string
+  +transactionStatus: string
+  +processPayment(): bool
+  +refundPayment(): bool
+  +getTransactionLogs(): string
+  +validateCardDetails(): bool
+  +sendReceipt(): bool
+}
+
+class Review {
+  +id: int
+  +rating: int
+  +comment: string
+  +createdAt: string
+  +isApproved: bool
+  +publish(): void
+  +delete(): bool
+  +editComment(newText: string): void
+  +approveByAdmin(): void
+  +getRatingStars(): string
+}
+
+class TourController {
+  +requestData: array
+  +responseFormat: string
+  +searchEngine: string
+  +filters: array
+  +cacheTime: int
+  +index(): array
+  +show(id: int): string
+  +store(data: array): bool
+  +update(id: int, data: array): bool
+  +destroy(id: int): bool
+}
+
+class BookingController {
+  +paymentGateway: string
+  +sessionData: array
+  +validatorRules: array
+  +notifierService: string
+  +authCheck: bool
+  +createBooking(request: array): string
+  +processOrder(id: int): bool
+  +cancel(id: int): bool
+  +downloadVoucher(id: int): file
+  +sendConfirmationEmail(id: int): bool
+}
+
+' Зв'язки UML (Inheritance, Composition, Aggregation, Association)
+Client --|> User
+Tour "1" *-- "1..*" Category
+Hotel "1" o-- "0..*" Tour
+Client "1" --> "0..*" Booking
+Tour "1" --> "0..*" Booking
+Booking "1" *-- "1" Payment
+Client "1" --> "0..*" Review
+TourController --> Tour
+BookingController --> Booking
+
+@enduml

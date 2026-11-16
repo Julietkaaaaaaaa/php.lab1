@@ -1,0 +1,57 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+' Актори 
+actor "Користувач" as user
+actor "Турист" as tourist
+actor "Менеджер" as manager
+actor "Адміністратор" as admin
+
+' Узагальнення акторів 
+tourist -up-|> user
+
+rectangle "Система туристичного оператора" {
+    
+    ' Сценарії для Користувача та Туриста (по 3 основні)
+    usecase "Авторизація в системі" as UC_Auth
+    usecase "Пошук туру" as UC_Search
+    usecase "Пошук за датою" as UC_SearchDate
+    usecase "Бронювання туру" as UC_Book
+    usecase "Вибір готелю" as UC_Hotel
+    usecase "Застосування промокоду" as UC_Promo
+    usecase "Скасування бронювання" as UC_Cancel
+    
+    ' Сценарії для Менеджера (3 сценарії)
+    usecase "Перевірка туроваучера" as UC_CheckVoucher
+    usecase "Підтвердження бронювання" as UC_Confirm
+    usecase "Формування списку групи" as UC_GroupList
+    
+    ' Сценарії для Адміністратора (3 сценарії)
+    usecase "Керування каталогом турів" as UC_ManageTours
+    usecase "Управління користувачами" as UC_ManageUsers
+    usecase "Перегляд статистики" as UC_Stats
+}
+
+' Зв'язки Асоціації (Актор -> Use Case)
+user -- UC_Auth
+
+tourist -- UC_Search
+tourist -- UC_Book
+tourist -- UC_Cancel
+
+manager -- UC_CheckVoucher
+manager -- UC_Confirm
+manager -- UC_GroupList
+
+admin -- UC_ManageTours
+admin -- UC_ManageUsers
+admin -- UC_Stats
+
+' Внутрішні зв'язки Use Cases (Include, Extend, Generalization)
+UC_Book .> UC_Auth : <<include>>
+UC_Book .> UC_Hotel : <<include>>
+UC_Promo .> UC_Book : <<extend>>
+UC_SearchDate -up-|> UC_Search
+
+@enduml
