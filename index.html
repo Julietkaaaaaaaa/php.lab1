@@ -1,0 +1,75 @@
+<?php
+
+declare(strict_types=1);
+
+require_once 'vendor/autoload.php';
+
+use App\Services\DataProcessor;
+use App\Services\EntityService;
+use Faker\Factory;
+
+echo "<h1>Лабораторна робота №3: Основи PHP</h1>";
+
+// --- Завдання 2: Користувацькі функції та строга типізація ---
+echo "<h2>Завдання 2: Строга типізація та бізнес-функція</h2>";
+$entityService = new EntityService();
+$totalPrice = $entityService->calculateTotalPrice(750.50, 3);
+echo "<p>Вартість туру (750.50 грн x 3 особи): <strong>{$totalPrice} грн</strong></p>";
+
+// --- Завдання 3 ---
+echo "<h2>Завдання 3: FakerPHP та фільтрація масиву (Closure)</h2>";
+$faker = Factory::create();
+$tourPrices = [];
+
+for ($i = 0; $i < 10; $i++) {
+    $tourPrices[] = $faker->randomFloat(2, 200, 1500);
+}
+
+$minThreshold = 600.0;
+
+$filteredPrices = array_filter($tourPrices, function (float $price) use ($minThreshold): bool {
+    return $price > $minThreshold;
+});
+
+echo "<p><strong>Згенеровані ціни турів:</strong> " . implode(', ', $tourPrices) . "</p>";
+echo "<p><strong>Ціни, більші за {$minThreshold} грн:</strong> " . implode(', ', $filteredPrices) . "</p>";
+
+// --- Завдання 4 ---
+echo "<h2>Завдання 4: Обробка винятків (Exceptions)</h2>";
+
+try {
+    echo "<p>Спроба застосувати некоректну знижку 150%...</p>";
+    $discountedPrice = $entityService->applyDiscount(1000.0, 150.0);
+    echo "<p>Нова ціна: {$discountedPrice}</p>";
+} catch (Exception $e) {
+    echo "<p style='color:red;'><strong>Перехоплено помилку:</strong> " . htmlspecialchars($e->getMessage()) . "</p>";
+} finally {
+    echo "<p><em>[finally] Завершення спроби розрахунку.</em></p>";
+}
+
+
+
+echo "<h2>Завдання 5 (Варіант 18)</h2>";
+
+$processor = new DataProcessor();
+
+// Задача 1 
+$numbersArray = [25, 12, 18, 30, 20, 15, 40];
+$task1Result = $processor->getIndicesGreaterThanRight($numbersArray);
+echo "<p><strong>1) Вхідний масив:</strong> [" . implode(', ', $numbersArray) . "]<br>";
+echo "<strong>Індекси елементів, більших за правого сусіда:</strong> [" . implode(', ', $task1Result['indices']) . "]<br>";
+echo "<strong>Кількість таких елементів:</strong> " . $task1Result['count'] . "</p>";
+
+// Задача 2 
+$inputString = "Туроператор пропонує найкращий відпочинок у горах";
+$swappedString = $processor->swapFirstAndLastWord($inputString);
+echo "<p><strong>2) Вхідний рядок:</strong> \"{$inputString}\"<br>";
+echo "<strong>Після заміни першого й останнього слів:</strong> \"{$swappedString}\"</p>";
+
+// Задача 3 
+$numbersString = "12 45 89 23 104 67 15";
+$maxNum = $processor->findMaxNumberInString($numbersString);
+echo "<p><strong>3) Рядок із числами:</strong> \"{$numbersString}\"<br>";
+echo "<strong>Максимальне число:</strong> {$maxNum}</p>";
+
+echo "<hr><p><a href='app/Models/EntityArray.php'>Перейти до Завдання 1 (EntityArray.php)</a></p>";
