@@ -1,57 +1,61 @@
 @startuml
-left to right direction
-skinparam packageStyle rectangle
+top to bottom direction
 
-' Актори 
-actor "Користувач" as user
-actor "Турист" as tourist
-actor "Менеджер" as manager
-actor "Адміністратор" as admin
+actor "Користувач" as User
+actor "Клієнт" as Client
+actor "Менеджер" as Manager
+actor "Адміністратор" as Admin
 
-' Узагальнення акторів 
-tourist -up-|> user
+' Спадкування
+Client -up-|> User
+Manager -up-|> User
+Admin -up-|> User
 
-rectangle "Система туристичного оператора" {
-    
-    ' Сценарії для Користувача та Туриста (по 3 основні)
-    usecase "Авторизація в системі" as UC_Auth
-    usecase "Пошук туру" as UC_Search
-    usecase "Пошук за датою" as UC_SearchDate
-    usecase "Бронювання туру" as UC_Book
-    usecase "Вибір готелю" as UC_Hotel
-    usecase "Застосування промокоду" as UC_Promo
-    usecase "Скасування бронювання" as UC_Cancel
-    
-    ' Сценарії для Менеджера (3 сценарії)
-    usecase "Перевірка туроваучера" as UC_CheckVoucher
-    usecase "Підтвердження бронювання" as UC_Confirm
-    usecase "Формування списку групи" as UC_GroupList
-    
-    ' Сценарії для Адміністратора (3 сценарії)
-    usecase "Керування каталогом турів" as UC_ManageTours
-    usecase "Управління користувачами" as UC_ManageUsers
-    usecase "Перегляд статистики" as UC_Stats
-}
+' Базові дії 
+usecase "Авторизація / Реєстрація" as UC_Auth
+usecase "Пошук та фільтрація турів" as UC_Search
 
-' Зв'язки Асоціації (Актор -> Use Case)
-user -- UC_Auth
+' Дії Клієнта 
+usecase "Бронювання туру" as UC_Book
+usecase "Вибір готелю" as UC_Hotel
+usecase "Застосування промокоду" as UC_Promo
+usecase "Оплата замовлення" as UC_Pay
+usecase "Генерація ваучера" as UC_Voucher
+usecase "Скасування бронювання" as UC_Cancel
 
-tourist -- UC_Search
-tourist -- UC_Book
-tourist -- UC_Cancel
+' Дії персоналу
+usecase "Підтвердження бронювання" as UC_Confirm
+usecase "Формування списків групи" as UC_Group
+usecase "Генерація звітів з продажів" as UC_Report
+usecase "Керування каталогом (Тури/Готелі)" as UC_ManageTours
+usecase "Управління користувачами" as UC_ManageUsers
 
-manager -- UC_CheckVoucher
-manager -- UC_Confirm
-manager -- UC_GroupList
+' --- ЗВ'ЯЗКИ ---
 
-admin -- UC_ManageTours
-admin -- UC_ManageUsers
-admin -- UC_Stats
+User --> UC_Auth
+User --> UC_Search
 
-' Внутрішні зв'язки Use Cases (Include, Extend, Generalization)
-UC_Book .> UC_Auth : <<include>>
-UC_Book .> UC_Hotel : <<include>>
-UC_Promo .> UC_Book : <<extend>>
-UC_SearchDate -up-|> UC_Search
+' Клієнт ініціює Бронювання
+Client --> UC_Book
+
+UC_Book ..> UC_Auth : <<include>>
+UC_Book ..> UC_Search : <<include>>
+
+UC_Book ..> UC_Hotel : <<include>>
+UC_Book ..> UC_Pay : <<include>>
+UC_Pay ..> UC_Voucher : <<include>>
+
+UC_Cancel ..> UC_Book : <<extend>>
+UC_Promo ..> UC_Book : <<extend>>
+
+' Дії Менеджера
+Manager --> UC_Confirm
+Manager --> UC_Group
+Manager --> UC_Report
+
+' Дії Адміністратора
+Admin --> UC_ManageTours
+Admin --> UC_ManageUsers
+Admin --> UC_Report
 
 @enduml
