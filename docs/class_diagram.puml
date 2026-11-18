@@ -1,145 +1,168 @@
 @startuml
 skinparam classAttributeIconSize 0
 
+' --- МОДЕЛІ ---
+
 class User {
   +id: int
-  +name: string
-  +email: string
+  +first_name: string
+  +last_name: string
   +phone: string
+  +email: string
   +password: string
-  +register(): bool
-  +login(): bool
-  +updateProfile(): void
-  +resetPassword(): bool
+  +role: string
+  +login(credentials: array): bool
   +getRole(): string
 }
 
 class Client {
-  +passportNumber: string
-  +discountBonus: float
-  +bookingHistory: array
-  +address: string
-  +birthDate: string
-  +applyDiscount(code: string): float
-  +getBookingCount(): int
-  +addBonus(points: float): void
-  +updatePassport(number: string): bool
-  +getDiscountRate(): float
+  +id: int
+  +user_id: int
+  +birth_date: date
+  +gender: string
+  +getBookingsHistory(): array
+}
+
+class Manager {
+  +id: int
+  +user_id: int
+  +position: string
+  +generateReport(start_date: date, end_date: date): array
 }
 
 class Tour {
   +id: int
   +title: string
-  +destination: string
-  +price: float
-  +durationDays: int
-  +getDetails(): string
-  +checkAvailability(): bool
-  +calculateTotalPrice(persons: int): float
-  +updatePrice(newPrice: float): void
-  +archiveTour(): bool
+  +destination_country: string
+  +start_date: date
+  +duration_days: int
+  +base_price: float
+  +filterTours(criteria: array): array
+  +getAvailableHotels(): array
 }
 
 class Hotel {
   +id: int
   +name: string
   +stars: int
+  +city: string
   +address: string
-  +roomsCount: int
-  +getAvailableRooms(): int
-  +updateStars(rating: int): void
-  +getHotelInfo(): string
-  +bookRoom(roomId: int): bool
-  +cancelRoomBooking(roomId: int): bool
+  +checkRoomAvailability(date: date): bool
 }
 
-class Category {
+class PromoCode {
   +id: int
-  +name: string
-  +description: string
-  +isActive: bool
   +code: string
-  +getToursCount(): int
-  +activateCategory(): void
-  +deactivateCategory(): void
-  +updateName(newName: string): void
-  +getCategoryDetails(): string
+  +discount_percent: float
+  +valid_until: date
+  +is_active: bool
+  +findActiveCode(code: string): bool
+  +getDiscountPercent(): float
 }
 
 class Booking {
   +id: int
-  +bookingDate: string
-  +totalPrice: float
+  +client_id: int
+  +tour_id: int
+  +hotel_id: int
+  +promocode_id: int
+  +manager_id: int
+  +booking_date: datetime
+  +tourist_count: int
+  +total_price: float
+  +payment_type: string
   +status: string
-  +touristCount: int
-  +createBooking(): bool
-  +cancelBooking(): bool
-  +confirmBooking(): void
-  +calculatePenalty(): float
-  +generateVoucher(): string
+  +updateStatus(new_status: string): void
+  +assignManager(manager_id: int): void
 }
 
 class Payment {
   +id: int
+  +booking_id: int
   +amount: float
-  +paymentDate: string
-  +paymentMethod: string
-  +transactionStatus: string
-  +processPayment(): bool
-  +refundPayment(): bool
-  +getTransactionLogs(): string
-  +validateCardDetails(): bool
-  +sendReceipt(): bool
+  +payment_method: string
+  +transaction_id: string
+  +status: string
+  +verifyStatus(): string
 }
 
-class Review {
+class Voucher {
   +id: int
-  +rating: int
-  +comment: string
-  +createdAt: string
-  +isApproved: bool
-  +publish(): void
-  +delete(): bool
-  +editComment(newText: string): void
-  +approveByAdmin(): void
-  +getRatingStars(): string
+  +booking_id: int
+  +qr_code_hash: string
+  +pdf_file_path: string
+  +issued_at: datetime
+  +generateQrHash(): string
+}
+
+' --- КОНТРОЛЕРИ  ---
+
+class AuthController {
+  +register(request: array): string
+  +login(request: array): string
+  +logout(): void
 }
 
 class TourController {
-  +requestData: array
-  +responseFormat: string
-  +searchEngine: string
-  +filters: array
-  +cacheTime: int
-  +index(): array
-  +show(id: int): string
+  +index(filters: array): array
   +store(data: array): bool
   +update(id: int, data: array): bool
   +destroy(id: int): bool
 }
 
-class BookingController {
-  +paymentGateway: string
-  +sessionData: array
-  +validatorRules: array
-  +notifierService: string
-  +authCheck: bool
-  +createBooking(request: array): string
-  +processOrder(id: int): bool
-  +cancel(id: int): bool
-  +downloadVoucher(id: int): file
-  +sendConfirmationEmail(id: int): bool
+class HotelController {
+  +index(tour_id: int): array
+  +show(id: int): string
 }
 
-' Зв'язки UML (Inheritance, Composition, Aggregation, Association)
+class BookingController {
+  +index(): array
+  +store(request: array): string
+  +show(id: int): string
+  +cancel(booking_id: int): bool
+  +calculateTotal(base_price: float, discount: float): float
+  +applyPromoCode(request: array): float
+  +confirmByManager(booking_id: int, manager_id: int): bool
+}
+
+class PaymentController {
+  +process(booking_id: int): bool
+  +webhook(callback_data: array): void
+}
+
+class VoucherController {
+  +generate(booking_id: int): file
+  +download(voucher_id: int): file
+}
+
+' --- ЗВ'ЯЗКИ МІЖ КЛАСАМИ ---
+
+' Спадкування користувачів
 Client --|> User
-Tour "1" *-- "1..*" Category
-Hotel "1" o-- "0..*" Tour
+Manager --|> User
+
+' Зв'язки Бронювання 
 Client "1" --> "0..*" Booking
-Tour "1" --> "0..*" Booking
-Booking "1" *-- "1" Payment
-Client "1" --> "0..*" Review
+Manager "1" --> "0..*" Booking
+
+' Зв'язок Тур-Готель 
+Tour "0..*" -- "0..*" Hotel
+
+' Що входить у Бронювання
+Booking "0..*" -- "1" Tour
+Booking "0..*" -- "1" Hotel
+Booking "0..*" -- "0..1" PromoCode
+
+' Композиція 
+Booking "1" *-- "0..*" Payment
+Booking "1" *-- "1" Voucher
+
+' Зв'язки Контролерів з Моделями 
 TourController --> Tour
+HotelController --> Hotel
 BookingController --> Booking
+BookingController --> PromoCode
+PaymentController --> Payment
+VoucherController --> Voucher
 
 @enduml
