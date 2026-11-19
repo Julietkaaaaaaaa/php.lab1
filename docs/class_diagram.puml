@@ -1,0 +1,168 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+' --- МОДЕЛІ ---
+
+class User {
+  +id: int
+  +first_name: string
+  +last_name: string
+  +phone: string
+  +email: string
+  +password: string
+  +role: string
+  +login(credentials: array): bool
+  +getRole(): string
+}
+
+class Client {
+  +id: int
+  +user_id: int
+  +birth_date: date
+  +gender: string
+  +getBookingsHistory(): array
+}
+
+class Manager {
+  +id: int
+  +user_id: int
+  +position: string
+  +generateReport(start_date: date, end_date: date): array
+}
+
+class Tour {
+  +id: int
+  +title: string
+  +destination_country: string
+  +start_date: date
+  +duration_days: int
+  +base_price: float
+  +filterTours(criteria: array): array
+  +getAvailableHotels(): array
+}
+
+class Hotel {
+  +id: int
+  +name: string
+  +stars: int
+  +city: string
+  +address: string
+  +checkRoomAvailability(date: date): bool
+}
+
+class PromoCode {
+  +id: int
+  +code: string
+  +discount_percent: float
+  +valid_until: date
+  +is_active: bool
+  +findActiveCode(code: string): bool
+  +getDiscountPercent(): float
+}
+
+class Booking {
+  +id: int
+  +client_id: int
+  +tour_id: int
+  +hotel_id: int
+  +promocode_id: int
+  +manager_id: int
+  +booking_date: datetime
+  +tourist_count: int
+  +total_price: float
+  +payment_type: string
+  +status: string
+  +updateStatus(new_status: string): void
+  +assignManager(manager_id: int): void
+}
+
+class Payment {
+  +id: int
+  +booking_id: int
+  +amount: float
+  +payment_method: string
+  +transaction_id: string
+  +status: string
+  +verifyStatus(): string
+}
+
+class Voucher {
+  +id: int
+  +booking_id: int
+  +qr_code_hash: string
+  +pdf_file_path: string
+  +issued_at: datetime
+  +generateQrHash(): string
+}
+
+' --- КОНТРОЛЕРИ  ---
+
+class AuthController {
+  +register(request: array): string
+  +login(request: array): string
+  +logout(): void
+}
+
+class TourController {
+  +index(filters: array): array
+  +store(data: array): bool
+  +update(id: int, data: array): bool
+  +destroy(id: int): bool
+}
+
+class HotelController {
+  +index(tour_id: int): array
+  +show(id: int): string
+}
+
+class BookingController {
+  +index(): array
+  +store(request: array): string
+  +show(id: int): string
+  +cancel(booking_id: int): bool
+  +calculateTotal(base_price: float, discount: float): float
+  +applyPromoCode(request: array): float
+  +confirmByManager(booking_id: int, manager_id: int): bool
+}
+
+class PaymentController {
+  +process(booking_id: int): bool
+  +webhook(callback_data: array): void
+}
+
+class VoucherController {
+  +generate(booking_id: int): file
+  +download(voucher_id: int): file
+}
+
+' --- ЗВ'ЯЗКИ МІЖ КЛАСАМИ ---
+
+' Спадкування користувачів
+Client --|> User
+Manager --|> User
+
+' Зв'язки Бронювання 
+Client "1" --> "0..*" Booking
+Manager "1" --> "0..*" Booking
+
+' Зв'язок Тур-Готель 
+Tour "0..*" -- "0..*" Hotel
+
+' Що входить у Бронювання
+Booking "0..*" -- "1" Tour
+Booking "0..*" -- "1" Hotel
+Booking "0..*" -- "0..1" PromoCode
+
+' Композиція 
+Booking "1" *-- "0..*" Payment
+Booking "1" *-- "1" Voucher
+
+' Зв'язки Контролерів з Моделями 
+TourController --> Tour
+HotelController --> Hotel
+BookingController --> Booking
+BookingController --> PromoCode
+PaymentController --> Payment
+VoucherController --> Voucher
+
+@enduml
