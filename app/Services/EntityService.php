@@ -13,6 +13,6 @@ class EntityService
 
     public function processEntity(AbstractEntity $entity): void
     {
-        $this->logger->log("Обробка сутності: " . $entity->getDetails());
+        $this->logger->log('Обробка сутності: '.$entity->getDetails());
     }
 }

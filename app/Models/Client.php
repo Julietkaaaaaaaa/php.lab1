@@ -20,5 +20,4 @@ class Client extends AbstractEntity
     {
         return "Клієнт (User ID: {$this->user_id}), Дата народження: {$this->birth_date}, Стать: {$this->gender}";
     }
-
 }

@@ -30,6 +30,7 @@ class Group
                 return $student;
             }
         }
+
         return null;
     }
 

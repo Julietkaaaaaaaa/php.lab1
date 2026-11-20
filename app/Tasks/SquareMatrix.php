@@ -12,7 +12,7 @@ class SquareMatrix
         public readonly array $data
     ) {
         if (count($data) !== 3 || count($data[0]) !== 3) {
-            throw new InvalidArgumentException("Матриця має бути 3x3");
+            throw new InvalidArgumentException('Матриця має бути 3x3');
         }
     }
 
@@ -24,7 +24,8 @@ class SquareMatrix
     public function getDeterminant(): float|int
     {
         $m = $this->data;
-        return 
+
+        return
             $m[0][0] * ($m[1][1] * $m[2][2] - $m[1][2] * $m[2][1]) -
             $m[0][1] * ($m[1][0] * $m[2][2] - $m[1][2] * $m[2][0]) +
             $m[0][2] * ($m[1][0] * $m[2][1] - $m[1][1] * $m[2][0]);

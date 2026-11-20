@@ -27,5 +27,4 @@ class Tour extends AbstractEntity implements ExportableInterface
     {
         return "Тур: {$this->title} ({$this->destination_country}), Тривалість: {$this->duration_days} днів, Ціна: {$this->base_price} грн. Старт: {$this->start_date}";
     }
-
 }
