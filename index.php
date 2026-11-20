@@ -1,59 +1,81 @@
 <?php
 
-use Faker\Factory;
+declare(strict_types=1);
 
 require_once 'vendor/autoload.php';
 
-require_once 'app/Services/EntityService.php';
-require_once 'app/Services/DataProcessor.php';
+use App\Core\Database;
+use App\Core\EntityFactory;
+use App\Services\ConsoleLogger;
+use App\Services\EntityService;
+use App\Tasks\Student;
+use App\Tasks\Group;
+use App\Tasks\Worker;
+use App\Tasks\EnterpriseManager;
+use App\Tasks\SquareMatrix;
 
-echo '<h3>Завдання 2: Робота користувацької функції</h3>';
-$totalPrice = calculateTotalPrice(1500.00, 2);
-echo 'Загальна ціна туру для 2 осіб: '.$totalPrice.'<br><br>';
+echo "<h2>Завдання 3: Патерн Singleton</h2>";
+$db1 = Database::getInstance();
+$db2 = Database::getInstance(); 
 
-echo '<h3>Завдання 3: Анонімні функції та генерація даних</h3>';
-$faker = Factory::create();
+echo "<h2>Завдання 1 та 3: Фабрика та створення об'єктів</h2>";
+$factory = new EntityFactory();
 
-$prices = [];
-for ($i = 0; $i < 10; $i++) {
-    $prices[] = $faker->randomFloat(2, 100, 2000);
-}
+$tour = $factory->createEntity('tour', [
+    'id' => 1,
+    'createdAt' => date('Y-m-d H:i:s'),
+    'title' => 'Морська пригода',
+    'destination_country' => 'Туреччина',
+    'start_date' => '2024-07-15',
+    'duration_days' => 7,
+    'base_price' => 15000.00
+]);
 
-$minThreshold = 500.0;
+$client = $factory->createEntity('client', [
+    'id' => 101,
+    'createdAt' => date('Y-m-d H:i:s'),
+    'user_id' => 42,
+    'birth_date' => '1995-08-24',
+    'gender' => 'Жіноча'
+]);
 
-$filteredPrices = array_filter($prices, function ($price) use ($minThreshold) {
-    return $price > $minThreshold;
-});
+echo $tour->getDetails() . "<br>";
+echo $client->getDetails() . "<br>";
 
-echo 'Згенеровані ціни: '.implode(', ', $prices).'<br>';
-echo "Відфільтровані ціни (більше $minThreshold): ".implode(', ', $filteredPrices).'<br><br>';
+echo "<h2>Завдання 2: Трейт та Інтерфейс (JSON Експорт)</h2>";
+echo $tour->exportToJson() . "<br>";
 
-echo '<h3>Завдання 4: Обробка винятків</h3>';
-try {
-    echo 'Спроба застосувати знижку 150%...<br>';
-    $discounted = applyDiscount(1000.0, 150.0);
-    echo 'Ціна зі знижкою: '.$discounted.'<br>';
-} catch (Exception $e) {
-    echo 'Помилка: '.$e->getMessage().'<br>';
-} finally {
-    echo 'Завершення спроби розрахунку.<br><br>';
-}
+echo "<h2>Завдання 4: Dependency Injection</h2>";
+$logger = new ConsoleLogger();
+$service = new EntityService($logger);
 
-echo '<h3>Завдання 5: Індивідуальне алгоритмічне завдання (Варіант 18)</h3>';
+$service->processEntity($tour);
+$service->processEntity($client);
 
-echo '<h4>Задача 1: Індекси елементів, більших за правого сусіда</h4>';
-$numbersArray = [5, 2, 8, 9, 3, 4, 1];
-echo 'Масив: '.implode(', ', $numbersArray).'<br>';
-$result1 = getIndicesGreaterThanRight($numbersArray);
-echo 'Індекси таких елементів: '.implode(', ', $result1['indices']).'<br>';
-echo 'Кількість таких елементів: '.$result1['count'].'<br>';
+echo "<h2>Завдання 6: Індивідуальні завдання (Варіант 18)</h2>";
 
-echo '<h4>Задача 2: Поміняти місцями перше і останнє слово</h4>';
-$text = 'PHP це чудова мова програмування';
-echo 'Початковий рядок: '.$text.'<br>';
-echo 'Результат: '.swapFirstAndLastWord($text).'<br>';
+echo "<h3>1. Композиція (Студенти та Група)</h3>";
+$group = new Group(1, "КН-21");
+$group->addStudent(new Student(1, "Олександр", "Петренко", "2005-04-12"));
+$group->addStudent(new Student(2, "Марія", "Іваненко", "2006-01-22"));
 
-echo '<h4>Задача 3: Максимальне число у рядку</h4>';
-$numberString = '10 45 3 99 21 7';
-echo 'Рядок чисел: '.$numberString.'<br>';
-echo 'Максимальне число: '.findMaxNumberInString($numberString).'<br>';
+$searched = $group->searchStudent("Іваненко");
+echo "Знайдено студента: {$searched->name} {$searched->surname} <br>";
+
+echo "<h3>2. Ієрархія працівників</h3>";
+$worker = new Worker(15000);
+echo "Зарплата робітника: " . $worker->calculateSalary() . " грн<br>";
+
+// 15000 (база) + 5000 (цех) + 7000 (відділ) + 12000 (підприємство)
+$director = new EnterpriseManager(15000, 5000, 7000, 12000);
+echo "Зарплата керівника підприємства: " . $director->calculateSalary() . " грн<br>";
+
+echo "<h3>3. Інкапсуляція (Матриця 3x3)</h3>";
+$matrixData = [
+    [2, -1, 3],
+    [4, 1, 5],
+    [-2, 3, 1]
+];
+$matrix = new SquareMatrix($matrixData);
+echo "Сума головної діагоналі: " . $matrix->getMainDiagonalSum() . "<br>";
+echo "Детермінант матриці: " . $matrix->getDeterminant() . "<br>";

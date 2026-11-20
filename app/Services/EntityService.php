@@ -2,19 +2,17 @@
 
 declare(strict_types=1);
 
-function calculateTotalPrice(float $price, int $persons): float
+namespace App\Services;
+
+use App\Interfaces\LoggerInterface;
+use App\Models\AbstractEntity;
+
+class EntityService
 {
-    return $price * $persons;
+    public function __construct(private LoggerInterface $logger) {}
 
-}
-
-function applyDiscount(float $price, float $discount): float
-{
-
-    if ($discount < 0 || $discount > 100) {
-        throw new Exception('Неприпустиме значення знижки!');
+    public function processEntity(AbstractEntity $entity): void
+    {
+        $this->logger->log("Обробка сутності: " . $entity->getDetails());
     }
-
-    return $price - ($price * ($discount / 100));
-
 }
