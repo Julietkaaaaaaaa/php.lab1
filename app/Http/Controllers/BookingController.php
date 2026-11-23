@@ -4,27 +4,23 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\Booking;
+use App\Models\Hotel;
+use App\Models\PromoCode;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class BookingController extends Controller
 {
-    private array $hotels = [
-        1 => ['id' => 1, 'name' => 'Sunny Beach Resort (3★)', 'surcharge' => 0.0],
-        2 => ['id' => 2, 'name' => 'Grand Blue Hotel (4★)', 'surcharge' => 4500.0],
-        3 => ['id' => 3, 'name' => 'Royal Palace & Spa (5★)', 'surcharge' => 9500.0],
-    ];
-
-    private array $promoCodes = [
-        'SUMMER10' => 10.0,
-        'VIP20' => 20.0,
-    ];
-
     public function availableHotels(): JsonResponse
     {
+        $hotels = Hotel::select(['id', 'name', 'stars', 'city', 'surcharge'])
+            ->orderBy('surcharge')
+            ->get();
+
         return response()->json([
             'status' => 'success',
-            'hotels' => array_values($this->hotels),
+            'hotels' => $hotels,
         ], 200);
     }
 
@@ -32,18 +28,31 @@ class BookingController extends Controller
     {
         $validated = $request->validate([
             'base_price' => ['required', 'numeric', 'min:0'],
-            'hotel_id' => ['required', 'integer', 'in:1,2,3'],
+            'hotel_id' => ['required', 'integer', 'exists:hotels,id'],
             'tourist_count' => ['required', 'integer', 'min:1', 'max:20'],
             'promo_code' => ['nullable', 'string', 'max:30'],
         ]);
 
+        $hotel = Hotel::findOrFail((int) $validated['hotel_id']);
+
         // 1. (Базова ціна туру + надбавка за готель) * кількість туристів
-        $pricePerTourist = (float) $validated['base_price'] + $this->hotels[(int) $validated['hotel_id']]['surcharge'];
+        $pricePerTourist = (float) $validated['base_price'] + $hotel->surcharge;
         $subtotal = $pricePerTourist * (int) $validated['tourist_count'];
 
-        // 2. Перевірка промокоду та віднімання знижки
-        $code = isset($validated['promo_code']) ? strtoupper(trim($validated['promo_code'])) : null;
-        $discountPercent = ($code !== null && isset($this->promoCodes[$code])) ? $this->promoCodes[$code] : 0.0;
+        // 2. Перевірка активного промокоду в БД та віднімання знижки
+        $discountPercent = 0.0;
+        if (! empty($validated['promo_code'])) {
+            $code = strtoupper(trim((string) $validated['promo_code']));
+
+            $promo = PromoCode::where('code', $code)
+                ->where('is_active', true)
+                ->whereDate('valid_until', '>=', now())
+                ->first();
+
+            if ($promo !== null) {
+                $discountPercent = $promo->discount_percent;
+            }
+        }
 
         $totalPrice = round($subtotal * (1 - $discountPercent / 100), 2);
 
@@ -51,6 +60,25 @@ class BookingController extends Controller
             'status' => 'success',
             'discount_percent' => $discountPercent,
             'total_price' => $totalPrice,
+        ], 200);
+    }
+
+    public function index(): JsonResponse
+    {
+        // Вкладене жадібне завантаження зв'язків 1:1 та 1:M (усуває проблему N+1)
+        $bookings = Booking::with([
+            'client.user',
+            'tour',
+            'hotel',
+            'promoCode',
+            'manager.user',
+            'payments',
+            'voucher',
+        ])->latest('booking_date')->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $bookings,
         ], 200);
     }
 }
