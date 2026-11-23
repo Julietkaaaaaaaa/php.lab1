@@ -2,10 +2,11 @@
 
 namespace Database\Factories;
 
+use App\Models\Tour;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Tour>
+ * @extends Factory<Tour>
  */
 class TourFactory extends Factory
 {
@@ -15,7 +16,7 @@ class TourFactory extends Factory
         $country = fake()->randomElement($countries);
 
         return [
-            'title' => 'Відпочинок: ' . $country . ' (' . fake()->words(2, true) . ')',
+            'title' => 'Відпочинок: '.$country.' ('.fake()->words(2, true).')',
             'description' => fake()->paragraph(),
             'destination_country' => $country,
             'start_date' => fake()->dateTimeBetween('+1 week', '+6 months')->format('Y-m-d'),

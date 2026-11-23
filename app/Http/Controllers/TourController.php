@@ -43,7 +43,7 @@ class TourController extends Controller
             'base_price' => (float) $validated['base_price'],
         ]);
 
-        if (!empty($validated['hotel_ids'])) {
+        if (! empty($validated['hotel_ids'])) {
             $tour->hotels()->attach($validated['hotel_ids']);
         }
 

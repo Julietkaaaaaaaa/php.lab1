@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Booking;
 use App\Models\Client;
 use App\Models\Hotel;
 use App\Models\Manager;
@@ -10,7 +11,7 @@ use App\Models\Tour;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Booking>
+ * @extends Factory<Booking>
  */
 class BookingFactory extends Factory
 {

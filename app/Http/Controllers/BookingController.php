@@ -41,7 +41,7 @@ class BookingController extends Controller
 
         // 2. Перевірка активного промокоду в БД та віднімання знижки
         $discountPercent = 0.0;
-        if (!empty($validated['promo_code'])) {
+        if (! empty($validated['promo_code'])) {
             $code = strtoupper(trim((string) $validated['promo_code']));
 
             $promo = PromoCode::where('code', $code)

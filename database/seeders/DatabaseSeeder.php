@@ -29,7 +29,7 @@ class DatabaseSeeder extends Seeder
                 $tour->hotels()->attach($hotels->random(3)->pluck('id')->toArray());
             });
 
-        //5 клієнтів та 2 менеджерів (зв'язки 1:1 з users)
+        // 5 клієнтів та 2 менеджерів (зв'язки 1:1 з users)
         $clients = Client::factory()->count(5)->create();
         $managers = Manager::factory()->count(2)->create();
 
@@ -58,14 +58,14 @@ class DatabaseSeeder extends Seeder
                     'booking_id' => $booking->id,
                     'amount' => $booking->total_price,
                     'payment_method' => 'card',
-                    'transaction_id' => 'TXN-' . strtoupper(Str::random(10)),
+                    'transaction_id' => 'TXN-'.strtoupper(Str::random(10)),
                     'status' => 'completed',
                 ]);
 
                 Voucher::create([
                     'booking_id' => $booking->id,
-                    'qr_code_hash' => hash('sha256', 'voucher-' . $booking->id),
-                    'pdf_file_path' => 'vouchers/voucher_' . $booking->id . '.pdf',
+                    'qr_code_hash' => hash('sha256', 'voucher-'.$booking->id),
+                    'pdf_file_path' => 'vouchers/voucher_'.$booking->id.'.pdf',
                     'issued_at' => now(),
                 ]);
             }
