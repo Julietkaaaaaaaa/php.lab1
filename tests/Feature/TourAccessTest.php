@@ -36,7 +36,7 @@ class TourAccessTest extends TestCase
     public function test_request_with_manager_role_passes_middleware(): void
     {
         $response = $this->withHeaders([
-            'X-Manager-Role' => 'manager',
+            'X-User-Role' => 'admin',
         ])->postJson('/tours', [
             'title' => 'Вікенд у Львові',
             'destination_country' => 'Україна',
