@@ -3,11 +3,12 @@
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\HotelController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PromoCodeController;
 use App\Http\Controllers\TourController;
 use App\Http\Controllers\VoucherController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', fn () => view('welcome'));
+Route::get('/', [TourController::class, 'home'])->name('home');
 
 // 1. Службовий маршрут перевірки стану системи (Health Check)
 Route::get('/health', fn () => response()->json([
@@ -17,16 +18,10 @@ Route::get('/health', fn () => response()->json([
 ]));
 
 // 2. Ресурсні маршрути для основних сутностей
-Route::resource('tours', TourController::class)
-    ->except(['create', 'edit'])
-    ->middlewareFor(['store', 'update', 'destroy'], 'role:admin');
-
-Route::resource('hotels', HotelController::class)
-    ->except(['create', 'edit'])
-    ->middlewareFor(['store', 'update', 'destroy'], 'role:admin');
-
-Route::resource('bookings', BookingController::class)
-    ->only(['index', 'store', 'show', 'destroy']);
+Route::resource('tours', TourController::class);
+Route::resource('hotels', HotelController::class);
+Route::resource('bookings', BookingController::class);
+Route::resource('promo-codes', PromoCodeController::class)->except(['show']);
 
 // 3. Додаткові маршрути бронювань
 Route::prefix('bookings')->name('bookings.')->group(function () {
@@ -39,7 +34,6 @@ Route::prefix('bookings')->name('bookings.')->group(function () {
         ->name('promo');
     Route::post('/{booking}/confirm/{managerId}', [BookingController::class, 'confirmByManager'])
         ->whereNumber(['booking', 'managerId'])
-        ->middleware('role:manager')
         ->name('confirm');
 });
 

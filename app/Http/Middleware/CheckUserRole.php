@@ -13,7 +13,8 @@ class CheckUserRole
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         if (
-            in_array($request->method(), ['POST', 'PUT', 'PATCH', 'DELETE'], true)
+            $request->expectsJson()
+            && in_array($request->method(), ['POST', 'PUT', 'PATCH', 'DELETE'], true)
             && ! in_array($request->header('X-User-Role'), $roles, true)
         ) {
             return response()->json([
