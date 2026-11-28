@@ -7,27 +7,36 @@ namespace App\Http\Controllers;
 use App\Models\Booking;
 use App\Models\Payment;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class PaymentController extends Controller
 {
-    public function process(Request $request, int $bookingId): JsonResponse
+    public function process(Request $request, int $bookingId): RedirectResponse|JsonResponse
     {
         $booking = Booking::find($bookingId);
 
         if ($booking === null) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Бронювання не знайдено.',
-            ], 404);
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Бронювання не знайдено.',
+                ], 404);
+            }
+
+            return back()->with('error', 'Бронювання не знайдено.');
         }
 
         if ($booking->status === 'paid') {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Бронювання вже оплачено.',
-            ], 409);
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Бронювання вже оплачено.',
+                ], 409);
+            }
+
+            return back()->with('error', 'Бронювання вже оплачено.');
         }
 
         $validated = $request->validate([
@@ -49,12 +58,16 @@ class PaymentController extends Controller
             $booking->update(['status' => 'paid']);
         }
 
-        return response()->json([
-            'status' => 'success',
-            'simulated' => true,
-            'payment' => $payment,
-            'booking_status' => $booking->status,
-        ], 201);
+        if ($request->expectsJson()) {
+            return response()->json([
+                'status' => 'success',
+                'simulated' => true,
+                'payment' => $payment,
+                'booking_status' => $booking->status,
+            ], 201);
+        }
+
+        return back()->with('success', 'Оплату проведено ('.$payment->transaction_id.').');
     }
 
     public function webhook(Request $request): JsonResponse

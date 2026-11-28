@@ -16,16 +16,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => CheckUserRole::class,
         ]);
 
-        $middleware->validateCsrfTokens(except: [
-            'tours',
-            'tours/*',
-            'hotels',
-            'hotels/*',
-            'bookings',
-            'bookings/*',
-            'payments/*',
-            'vouchers/*',
-        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

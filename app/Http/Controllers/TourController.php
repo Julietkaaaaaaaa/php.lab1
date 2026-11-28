@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\Hotel;
 use App\Models\Tour;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class TourController extends Controller
 {
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): View|JsonResponse
     {
         $query = Tour::with('hotels');
 
@@ -22,13 +25,26 @@ class TourController extends Controller
             $query->where('base_price', '<=', (float) $request->input('max_price'));
         }
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $query->latest('start_date')->get(),
-        ], 200);
+        if ($request->expectsJson()) {
+            return response()->json([
+                'status' => 'success',
+                'data' => $query->latest('start_date')->get(),
+            ], 200);
+        }
+
+        $tours = $query->latest('start_date')->paginate(5)->withQueryString();
+
+        return view('tours.index', compact('tours'));
     }
 
-    public function store(Request $request): JsonResponse
+    public function create(): View
+    {
+        $hotels = Hotel::orderBy('name')->get();
+
+        return view('tours.create', compact('hotels'));
+    }
+
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
         $validated = $request->validate([
             'title' => ['required', 'string', 'min:3', 'max:255'],
@@ -39,46 +55,80 @@ class TourController extends Controller
             'base_price' => ['required', 'numeric', 'min:0'],
             'hotel_ids' => ['nullable', 'array'],
             'hotel_ids.*' => ['integer', 'exists:hotels,id'],
+            'hotels' => ['nullable', 'array'],
+            'hotels.*' => ['integer', 'exists:hotels,id'],
         ]);
 
-        $tour = Tour::create($validated);
+        $tour = Tour::create([
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
+            'destination_country' => $validated['destination_country'],
+            'start_date' => $validated['start_date'],
+            'duration_days' => (int) $validated['duration_days'],
+            'base_price' => (float) $validated['base_price'],
+        ]);
 
-        if (! empty($validated['hotel_ids'])) {
-            $tour->hotels()->sync($validated['hotel_ids']);
+        $hotelIds = $validated['hotels'] ?? $validated['hotel_ids'] ?? [];
+        $tour->hotels()->sync($hotelIds);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'status' => 'created',
+                'data' => $tour->load('hotels'),
+            ], 201);
         }
 
-        return response()->json([
-            'status' => 'created',
-            'data' => $tour->load('hotels'),
-        ], 201);
+        return redirect()
+            ->route('tours.index')
+            ->with('success', 'Тур успішно створено!');
     }
 
-    public function show(string $id): JsonResponse
+    public function show(Request $request, string $id): View|JsonResponse
     {
         $tour = Tour::with('hotels')->find((int) $id);
 
         if ($tour === null) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Тур не знайдено.',
-            ], 404);
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Тур не знайдено.',
+                ], 404);
+            }
+
+            abort(404);
         }
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $tour,
-        ], 200);
+        if ($request->expectsJson()) {
+            return response()->json([
+                'status' => 'success',
+                'data' => $tour,
+            ], 200);
+        }
+
+        return view('tours.show', compact('tour'));
     }
 
-    public function update(Request $request, string $id): JsonResponse
+    public function edit(string $id): View
+    {
+        $tour = Tour::with('hotels')->findOrFail((int) $id);
+        $hotels = Hotel::orderBy('name')->get();
+
+        return view('tours.edit', compact('tour', 'hotels'));
+    }
+
+    public function update(Request $request, string $id): RedirectResponse|JsonResponse
     {
         $tour = Tour::find((int) $id);
 
         if ($tour === null) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Тур не знайдено.',
-            ], 404);
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Тур не знайдено.',
+                ], 404);
+            }
+
+            abort(404);
         }
 
         $validated = $request->validate([
@@ -90,35 +140,62 @@ class TourController extends Controller
             'base_price' => ['sometimes', 'required', 'numeric', 'min:0'],
             'hotel_ids' => ['nullable', 'array'],
             'hotel_ids.*' => ['integer', 'exists:hotels,id'],
+            'hotels' => ['nullable', 'array'],
+            'hotels.*' => ['integer', 'exists:hotels,id'],
         ]);
 
         $tour->update($validated);
 
-        if (array_key_exists('hotel_ids', $validated)) {
-            $tour->hotels()->sync($validated['hotel_ids'] ?? []);
+        if ($request->expectsJson()) {
+            if (array_key_exists('hotel_ids', $validated)) {
+                $tour->hotels()->sync($validated['hotel_ids'] ?? []);
+            }
+
+            return response()->json([
+                'status' => 'updated',
+                'data' => $tour->load('hotels'),
+            ], 200);
         }
 
-        return response()->json([
-            'status' => 'updated',
-            'data' => $tour->load('hotels'),
-        ], 200);
+        $tour->hotels()->sync($validated['hotels'] ?? []);
+
+        return redirect()
+            ->route('tours.index')
+            ->with('success', 'Тур успішно оновлено!');
     }
 
-    public function destroy(string $id): JsonResponse
+    public function destroy(Request $request, string $id): RedirectResponse|JsonResponse
     {
         $tour = Tour::find((int) $id);
 
         if ($tour === null) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Тур не знайдено.',
-            ], 404);
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Тур не знайдено.',
+                ], 404);
+            }
+
+            abort(404);
         }
 
         $tour->delete();
 
-        return response()->json([
-            'status' => 'deleted',
-        ], 200);
+        if ($request->expectsJson()) {
+            return response()->json([
+                'status' => 'deleted',
+            ], 200);
+        }
+
+        return redirect()
+            ->route('tours.index')
+            ->with('success', 'Тур успішно видалено!');
+    }
+
+    public function home(): View
+    {
+        $featuredTours = Tour::with('hotels')->latest('start_date')->paginate(6);
+
+        return view('home', compact('featuredTours'));
     }
 }
